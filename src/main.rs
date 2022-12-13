@@ -30,13 +30,14 @@ fn main() {
 
     // Sort page_rank in ascending order
     page_rank.sort_by(|a, b| a.0.cmp(&b.0));
+    let top50: Vec<usize> = page_rank.iter().map(|(num, _)| *num).collect();
 
     // Print Some Info about our List of Edges
     println!("\nLength of our entire list of edges (conections between nodes):{:?}",list_edges.len());
     
     //  HERE WE CREATE OUR GRAPH FOR THE CONNECTIONS BETWEEN THE TOP 50 NODES
     let mut adj_list = grouped_vertex_tuples(&list_edges);
-    println!("Length of Adjacency List: {:?}\n",adj_list.len());
+    println!("Length of our Graph: {:?}\n",adj_list.len());
 
     //  Make "n" be the largest Vertex inside list_edges + 1
     let n = list_edges.iter()
@@ -52,6 +53,12 @@ fn main() {
 
     // Sort our graph in ascending order
     graph = graph.sort_ascending_order();
+
+    // Create a HashMap that contains the top 50 nodes and their connections
+    let mut graph_hashmap = HashMap::new();
+    for (i, num) in top50.iter().enumerate() {
+        graph_hashmap.insert(*num, &adj_list[i]);
+    }
 
     // Preview our graph
     println!("These are the top 50 nodes and their connections between them: ");
@@ -72,93 +79,32 @@ fn main() {
     println!("Visited vertices BFS:\n {:?}", visited);  
     println!("");
 
-    // println!("First Adj List value: {:?}",adj_list[0]);
-
-    // let distances = calculate_distance(&graph, source_node, &visited);
-    let distances = calculate_distances(&adj_list, &visited, source_node);
-    println!("Distances from node {}: {:?}", source_node, distances);   
-
-
-    // println!("Graph Outedges: ");
-    // println!("{:?}",graph.outedges);
-
     // CALCULATE THE DISTANCE BETWEEN EACH NODE INSIDE THE TOP 50 NODES
     // -------------------------------------------------------------------------
-//     for i in 0..adj_list.len(){
-//         println!("Distances from node {}:",page_rank[i].0);
-    
-//         let start: Vertex = page_rank[i].0; // <= we'll start from this vertex // THIS WOULD BE OUR INITIAL VERTEX
-    
-//         let mut distance: Vec<Option<u32>> = vec![None;(page_rank[49].0 +1)];
-//         distance[start] = Some(0); // <= we know this distance
-    
-//         let mut queue: VecDeque<Vertex> = VecDeque::new();
-//         queue.push_back(start);
-    
-//         println!("{:?}",queue);
-//         while let Some(v) = queue.pop_front() { // new unprocessed vertex
-//             // println!("top {:?}",queue);
-
-//             for u in graph.outedges[v].iter() {
-//                 if let None = distance[*u] { // consider all unprocessed neighbors of v
-//                     distance[*u] = Some(distance[v].unwrap() + 1);
-//                     queue.push_back(*u);
-//                     println!("In {:?}",queue);
-//                 }
-//             }
-//         };
-    
-    
-    
-//     print!("vertex:distance");
-//     for v in 0..50 {
-//             let vert: Vertex = page_rank[i].0;
-//             print!("   {}:{}",vert,distance[v].unwrap());
-//     }
-// }
-//     println!();
-
-    
-    // println!("Adjacency List: ");
-    // println!("{:?}",adj_list);
+    println!("I dont want to print the distance between each of the top 50 nodes between them because it will print a huge string of numbers. So I will just print the distance between the first node and the rest of the nodes inside the top 50 nodes.");
+    println!("\nThe distance between the first node = ({}) and the rest of nodes inside the top 50 nodes is: \n", top50[0]);
+    for i in 0..top50.len() {
+        let mut distance_nodes= bfs_distance_nodes(&graph_hashmap, top50[0], top50[i]);
+        print!("->The distance between node {} and node {} is {}.   ", top50[0], top50[i],distance_nodes);
+    }
 
 
+// // -------------------------------------------------------------------------
+// THIS TWO ALGORITHMS I CREATED THE CODE FOR THEM BUT I DID NOT IMPLEMENT THEM
+// AS I DECIDED TO ANALYZE BFS ALGORITHM AND THE DISTANCE BETWEEN NODES INSTEAD
+// THEY ARE COMMENTED OUT BUT YOU CAN UNCOMMENT THEM TO SEE THE CODE
 
 
-    //
-
-
-
-
-
-
-    
-
-    // THE IMPORTANT PART IS TO CALCULATE THE DISTANCE BETWEEN EACH NODE INSIDE THE TOP 50 NODES
-    // THIS 
-    // THE DISTANCE BETWEEN EACH NODE INSIDE THE BFS RETURN VECTOR
-    
-
-
-
-    // // IMPLEMENTING DFS ALGORITHM
     // // -------------------------------------------------------------------------
+    // // IMPLEMENTING DFS ALGORITHM
     // let visi = dfs(&graph, page_rank[0].0);
     // println!("Visited vertices DFS:\n {:?}", visi);
-    // println!("");
 
-    
-    // // // IMPLEMENTING DIJKSTRA ALGORITHM
-    // // // -------------------------------------------------------------------------
-    // // let distances = dijkstra(&graph, page_rank[0].0);
-    // // let distances = dijkstra(page_rank[0].0, &list_edges, page_rank[49].0);
 
+    // // -------------------------------------------------------------------------   
+    // // IMPLEMENTING DIJKSTRA ALGORITHM
     // let mut distances = dijkstra(page_rank[0].0, &adj_list, page_rank[49].0);
     // println!("Distances from initial vertex (computed with Dijkstra): {:?}", distances);
-    // // println!("");
-
-
-
 
 
 }
@@ -168,76 +114,37 @@ fn main() {
 // CALCULATE THE DISTANCES BETWEEN VECTORS
 // The distance between two nodes can be obtained in terms of lowest common ancestor 
 // -------------------------------------------------------------------------
-fn calculate_distances(adjacency_list: &Vec<Vec<Vertex>>, bfs_output: &Vec<Vertex>, source_node: Vertex) -> Vec<usize> {
-    // Create a vector to store the distances of each vertex from the source
-    let mut distances = vec![0; adjacency_list.len()];
 
-    // Create a queue to hold the vertices that are waiting to be processed
+fn bfs_distance_nodes(graph: &HashMap<usize, &Vec<usize>>, source: usize, target: usize) -> usize {
     let mut queue = VecDeque::new();
+    let mut distances = HashMap::new();
+    let mut visited = HashMap::new();
 
-    // Start the BFS algorithm at the specified source node
-    queue.push_back(source_node);
+    queue.push_back(source);
+    distances.insert(source, 0);
+    visited.insert(source, true);
 
-    // Continue processing vertices until the queue is
-
-//complete the function above 
-
-// Continue processing vertices until the queue is empty
-    while let Some(v) = queue.pop_front() {
-        // Skip this vertex if it has already been visited
-        if !bfs_output.contains(&v) {
-            continue;
+    while !queue.is_empty() {
+        let current = queue.pop_front().unwrap();
+        if current == target {
+            return distances[&target];
         }
 
-        // Add all the unvisited neighbors of this vertex to the queue
-        if v < adjacency_list.len() {
-            for &w in &adjacency_list[v] {
-                if !bfs_output.contains(&w) {
-                    queue.push_back(w);
-                    distances[w] = distances[v] + 1;
-                }
+        for &neighbor in graph[&current] {
+            if !visited.contains_key(&neighbor) {
+                queue.push_back(neighbor);
+                visited.insert(neighbor, true);
+// continue the function here
+
+                let distance = distances[&current] + 1;
+                distances.insert(neighbor, distance);
             }
         }
     }
-
-    // Return the distances from each vertex from the source node
-    distances
+    std::usize::MAX
 }
 
 
-// fn calculate_distances(adjacency_list: &Vec<Vec<Vertex>>, bfs_output: &Vec<Vertex>, source_node: Vertex) -> Vec<usize> {
-//     // Create a vector to store the distances of each vertex from the source
-//     let mut distances = vec![0; adjacency_list.len()];
-
-//     // Create a queue to hold the vertices that are waiting to be processed
-//     let mut queue = VecDeque::new();
-
-//     // Start the BFS algorithm at the specified source node
-//     queue.push_back(source_node);
-
-//     // Continue processing vertices until the queue is empty
-//     while let Some(v) = queue.pop_front() {
-//         // Skip this vertex if it has already been visited
-//         if !bfs_output.contains(&v) {
-//             continue;
-//         }
-//         // Set the distance of this vertex from the source node
-//         distances[v] = distances[v] + 1;
-
-//         // Add all the unvisited neighbors of this vertex to the queue
-//         // COMPLETE THIS FUNCTION WITH THE LOGIC BEHIND IT 
-//         if v < adjacency_list.len() {
-//             for &w in &adjacency_list[v] {
-//                 if !bfs_output.contains(&w) {
-//                     queue.push_back(w);
-//                 }
-//             }
-//         }
-//     }
-
-//     // Return the distances from each vertex from the source node
-//     distances
-// }
 
 
 
@@ -246,70 +153,34 @@ fn calculate_distances(adjacency_list: &Vec<Vec<Vertex>>, bfs_output: &Vec<Verte
 //  DIJKSTRA ALGORITHM 
 // -------------------------------------------------------------------------
 // Define a function that performs the Dijkstra algorithm on a graph
-// Function to compute the shortest path from the starting vertex to all other vertices
-// in the graph using Dijkstra's algorithm
-// create the Dijkstra's algorithm
-// LEONIDAS CODE
-// fn dijkstra(src: usize, graph: &Vec<Vec<usize>>, V: usize) -> Vec<usize> {
-//     let mut dist = vec![std::usize::MAX; V];
-//     dist[src] = 0;
-//     let mut sptSet = vec![false; V];
+// shortest path from the starting vertex to all other vertices
+fn dijkstra(src: usize, graph: &Vec<Vec<(usize, usize)>>, V: usize) -> Vec<usize> {
+    let mut dist = vec![std::usize::MAX; V];
+    dist[src] = 0;
+    let mut sptSet = vec![false; V];
+    for cout
+        in 0..V {
+        // Pick the minimum distance vertex from
+        // the set of vertices not yet processed.
+        let x = minDistance(dist.clone(), sptSet.clone());
 
-//     for cout in 0..V {
-//         // Pick the minimum distance vertex from
-//         // the set of vertices not yet processed.
-//         // x is always equal to src in first iteration
-//         let x = minDistance(dist.clone(), sptSet.clone());
+        // Put the minimum distance vertex in the
+        // shortest path tree
+        sptSet[x] = true;
 
-//         // Put the minimum distance vertex in the
-//         // shortest path tree
-//         sptSet[x] = true;
+        // Update dist value of the adjacent vertices
+        // of the picked vertex only if the current
+        // distance is greater than new distance and
+        // the vertex in not in the shortest path tree
+        for (neighbor, cost) in graph[x].iter() {
+            if !sptSet[*neighbor] && dist[*neighbor] > dist[x] + *cost {
+                dist[*neighbor] = dist[x] + *cost;
+            }
+        }
+    }
 
-//         // Update dist value of the adjacent vertices
-//         // of the picked vertex only if the current
-//         // distance is greater than new distance and
-//         // the vertex in not in the shortest path tree
-//         for y in 0..(graph[count].len()) {
-//             let (neighbor, cost) = graph[count][y];
-//             if !sptSet[neighbor] && dist[neighbor] > dist[x] + cost {
-//                 dist[neighbor] = dist[x] + cost;
-//             }
-//         }
-//     }
-
-//     dist
-// }
-
-// fn dijkstra(src: usize, graph: &Vec<Vec<usize>>, V: usize) -> Vec<usize> {
-//     let mut dist = vec![std::usize::MAX; V];
-//     dist[src] = 0;
-//     let mut sptSet = vec![false; V];
-
-//     for count in 0..V {
-//         // Pick the minimum distance vertex from
-//         // the set of vertices not yet processed.
-//         // x is always equal to src in first iteration
-//         let x = minDistance(dist.clone(), sptSet.clone());
-//         // initialize count
-
-//         // Put the minimum distance vertex in the
-//         // shortest path tree
-//         sptSet[x] = true;
-
-//         // Update dist value of the adjacent vertices
-//         // of the picked vertex only if the current
-//         // distance is greater than new distance and
-//         // the vertex in not in the shortest path tree
-//         for y in 0..(graph[count].len()) {
-//             let (neighbor, cost) = graph[count][y];
-//             if !sptSet[neighbor] && dist[neighbor] > dist[x] + cost {
-//                 dist[neighbor] = dist[x] + cost;
-//             }
-//         }
-//     }
-
-//     dist
-// }
+    dist
+}
 
 
 fn minDistance(dist: Vec<usize>, sptSet: Vec<bool>) -> usize {
