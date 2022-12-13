@@ -1,3 +1,5 @@
+// THIS IS THE FILE I AM WORKING ON 12/12/2022
+
 // import crates
 use rand::Rng;
 use std::fs::File;
@@ -7,6 +9,9 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
+use std::cmp::Ordering;
+use std::collections::{ HashMap, HashSet};
+use std::iter::successors;
 
 
 fn main() {
@@ -14,28 +19,41 @@ fn main() {
     let mut list_edges = read_file("edges_huawei.txt");
     list_edges.sort();
 
-    let page_rank = page_rank(&mut list_edges, n);
-    // println!("{:?}",page_rank);
-    // page_rank.sort();
-    // println!("{:?}",list_edges.len());
+    let mut page_rank = page_rank(&mut list_edges, n);
 
     // With this code we are filtering our list_edges to only contain the connections between the top 50 edges
     list_edges.retain(|&(a, _)| page_rank.iter().any(|&(b, _)| a == b));
     list_edges.retain(|&(_, a)| page_rank.iter().any(|&(b, _)| a == b));
-    list_edges.sort();
 
-    // println!("{:?}",list_edges);
-    // println!("{:?}",list_edges.len());
+    // Sort the list_edges in ascending order
+    list_edges.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Sort page_rank in ascending order
+    page_rank.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Print Some Info about our List of Edges
+    println!("\nLength of our entire list of edges (conections between nodes):{:?}",list_edges.len());
     
     //  HERE WE CREATE OUR GRAPH FOR THE CONNECTIONS BETWEEN THE TOP 50 NODES
     let mut adj_list = grouped_vertex_tuples(&list_edges);
-    n = adj_list.len();
+    println!("Length of Adjacency List: {:?}\n",adj_list.len());
+
+    //  Make "n" be the largest Vertex inside list_edges + 1
+    let n = list_edges.iter()
+                  .flat_map(|&(u, v)| vec![u, v])
+                  .max()
+                  .map(|x| x + 1)
+                  .unwrap_or(0);
+    println!("Biggest Vertex plus 1 (our N value): {}\n", n);
+
+    // Create our graph that ontains only the edges between the top50 nodes (calculated by Page Rank)
     let mut graph = Graph::create_directed(n,&list_edges);
     graph.outedges.retain(|edges| !edges.is_empty());
 
+    // Sort our graph in ascending order
     graph = graph.sort_ascending_order();
-    // println!("{:?}",graph);
 
+    // Preview our graph
     println!("These are the top 50 nodes and their connections between them: ");
     for (i, edges) in graph.outedges.iter().enumerate() {
         // Skip vertices that don't have any outgoing edges
@@ -43,41 +61,101 @@ fn main() {
             continue;
         }
         // Print the vertex number and its outgoing edges
-        println!("Node: {} - Edges: {:?}", page_rank[i].0, edges);
+        println!("({}) Node: {} - Edges: {:?}",i, page_rank[i].0, edges); //list_edges[i].0,edges);//
     }
 
+
     // IMPLEMENTING BFS ALGORITHM 
-    // -------------------------------------------------------------------------  
-    let visited = bfs(&graph, list_edges[0].0);
-    println!("Visited vertices BFS: {:?}", visited);  
+    // -------------------------------------------------------------------------
+    let source_node = page_rank[0].0;
+    let visited = bfs(&graph,page_rank[0].0);
+    println!("Visited vertices BFS:\n {:?}", visited);  
     println!("");
 
-    // // IMPLEMENTING DIJKSTRA ALGORITHM 
-    // // -------------------------------------------------------------------------
-    // let distances = dijkstra(&graph, 0);
-    // println!("Distances from initial vertex: {:?}", distances);
+    // println!("First Adj List value: {:?}",adj_list[0]);
+
+    // let distances = calculate_distance(&graph, source_node, &visited);
+    let distances = calculate_distances(&adj_list, &visited, source_node);
+    println!("Distances from node {}: {:?}", source_node, distances);   
 
 
+    // println!("Graph Outedges: ");
+    // println!("{:?}",graph.outedges);
 
-    // //  THIS IS DFS , WE NEED BFS 
-    // // -------------------------------------------------------------------------
-    // let mut visited = vec![false;graph.n];
-    // let mut distance = vec![0;graph.n];
-
-    // // Calculate DFS for top 50 nodes (rank based on page rank)
-    // for i in 0..50 {
-    //     println!{"For vertex {}", page_rank[i].0};
-    //     visited[page_rank[i].0] = true;
-    //     distance[page_rank[i].0] = 0;
+    // CALCULATE THE DISTANCE BETWEEN EACH NODE INSIDE THE TOP 50 NODES
+    // -------------------------------------------------------------------------
+//     for i in 0..adj_list.len(){
+//         println!("Distances from node {}:",page_rank[i].0);
     
-    //     dfs(page_rank[i].0, &graph, 1, &mut visited, &mut distance);
-    //     println!("vertex:distance");
-    //     for v in 0..graph.n {
-    //         print!("   {}:{}",v,distance[v]);
-    //     }
-    //     println!();
-    // }
+//         let start: Vertex = page_rank[i].0; // <= we'll start from this vertex // THIS WOULD BE OUR INITIAL VERTEX
+    
+//         let mut distance: Vec<Option<u32>> = vec![None;(page_rank[49].0 +1)];
+//         distance[start] = Some(0); // <= we know this distance
+    
+//         let mut queue: VecDeque<Vertex> = VecDeque::new();
+//         queue.push_back(start);
+    
+//         println!("{:?}",queue);
+//         while let Some(v) = queue.pop_front() { // new unprocessed vertex
+//             // println!("top {:?}",queue);
+
+//             for u in graph.outedges[v].iter() {
+//                 if let None = distance[*u] { // consider all unprocessed neighbors of v
+//                     distance[*u] = Some(distance[v].unwrap() + 1);
+//                     queue.push_back(*u);
+//                     println!("In {:?}",queue);
+//                 }
+//             }
+//         };
+    
+    
+    
+//     print!("vertex:distance");
+//     for v in 0..50 {
+//             let vert: Vertex = page_rank[i].0;
+//             print!("   {}:{}",vert,distance[v].unwrap());
+//     }
+// }
+//     println!();
+
+    
+    // println!("Adjacency List: ");
+    // println!("{:?}",adj_list);
+
+
+
+
+    //
+
+
+
+
+
+
+    
+
+    // THE IMPORTANT PART IS TO CALCULATE THE DISTANCE BETWEEN EACH NODE INSIDE THE TOP 50 NODES
+    // THIS 
+    // THE DISTANCE BETWEEN EACH NODE INSIDE THE BFS RETURN VECTOR
+    
+
+
+
+    // // IMPLEMENTING DFS ALGORITHM
     // // -------------------------------------------------------------------------
+    // let visi = dfs(&graph, page_rank[0].0);
+    // println!("Visited vertices DFS:\n {:?}", visi);
+    // println!("");
+
+    
+    // // // IMPLEMENTING DIJKSTRA ALGORITHM
+    // // // -------------------------------------------------------------------------
+    // // let distances = dijkstra(&graph, page_rank[0].0);
+    // // let distances = dijkstra(page_rank[0].0, &list_edges, page_rank[49].0);
+
+    // let mut distances = dijkstra(page_rank[0].0, &adj_list, page_rank[49].0);
+    // println!("Distances from initial vertex (computed with Dijkstra): {:?}", distances);
+    // // println!("");
 
 
 
@@ -85,44 +163,168 @@ fn main() {
 
 }
 
-// IMPLEMENTING DIJKSTRA ALGORITHM 
+
 // -------------------------------------------------------------------------
-// Define a function that performs the Dijkstra algorithm on a graph
-fn dijkstra(g: &Graph, source: Vertex) -> Vec<usize> {
-    // Create a priority queue of vertices, where the priority is determined by the distance from the source vertex
-    let mut queue = BinaryHeap::new();
+// CALCULATE THE DISTANCES BETWEEN VECTORS
+// The distance between two nodes can be obtained in terms of lowest common ancestor 
+// -------------------------------------------------------------------------
+fn calculate_distances(adjacency_list: &Vec<Vec<Vertex>>, bfs_output: &Vec<Vertex>, source_node: Vertex) -> Vec<usize> {
+    // Create a vector to store the distances of each vertex from the source
+    let mut distances = vec![0; adjacency_list.len()];
 
-    // Create a vector to hold the distances from the source vertex to all other vertices in the graph
-    let mut distances = vec![std::usize::MAX; g.n];
+    // Create a queue to hold the vertices that are waiting to be processed
+    let mut queue = VecDeque::new();
 
-    // Set the distance from the source vertex to itself to 0
-    distances[source] = 0;
+    // Start the BFS algorithm at the specified source node
+    queue.push_back(source_node);
 
-    // Add the source vertex to the priority queue
-    queue.push(Reverse((0, source)));
+    // Continue processing vertices until the queue is
 
-    // Continue processing vertices until the priority queue is empty
-    while let Some(Reverse((d, v))) = queue.pop() {
-        // Skip this vertex if it has already been processed
-        if d != distances[v] {
+//complete the function above 
+
+// Continue processing vertices until the queue is empty
+    while let Some(v) = queue.pop_front() {
+        // Skip this vertex if it has already been visited
+        if !bfs_output.contains(&v) {
             continue;
         }
-        // Iterate over the neighbors of the current vertex
-        for &w in &g.outedges[v] {
-            // Calculate the distance from the source vertex to this neighbor
-            let distance = d + 1;
 
-            // Update the distance of this neighbor if it is smaller than the current distance
-            if distance < distances[w] {
-                distances[w] = distance;
-                queue.push(Reverse((distance, w)));
+        // Add all the unvisited neighbors of this vertex to the queue
+        if v < adjacency_list.len() {
+            for &w in &adjacency_list[v] {
+                if !bfs_output.contains(&w) {
+                    queue.push_back(w);
+                    distances[w] = distances[v] + 1;
+                }
             }
         }
     }
-    // Return the vector of distances from the source vertex to all other vertices
+
+    // Return the distances from each vertex from the source node
     distances
 }
+
+
+// fn calculate_distances(adjacency_list: &Vec<Vec<Vertex>>, bfs_output: &Vec<Vertex>, source_node: Vertex) -> Vec<usize> {
+//     // Create a vector to store the distances of each vertex from the source
+//     let mut distances = vec![0; adjacency_list.len()];
+
+//     // Create a queue to hold the vertices that are waiting to be processed
+//     let mut queue = VecDeque::new();
+
+//     // Start the BFS algorithm at the specified source node
+//     queue.push_back(source_node);
+
+//     // Continue processing vertices until the queue is empty
+//     while let Some(v) = queue.pop_front() {
+//         // Skip this vertex if it has already been visited
+//         if !bfs_output.contains(&v) {
+//             continue;
+//         }
+//         // Set the distance of this vertex from the source node
+//         distances[v] = distances[v] + 1;
+
+//         // Add all the unvisited neighbors of this vertex to the queue
+//         // COMPLETE THIS FUNCTION WITH THE LOGIC BEHIND IT 
+//         if v < adjacency_list.len() {
+//             for &w in &adjacency_list[v] {
+//                 if !bfs_output.contains(&w) {
+//                     queue.push_back(w);
+//                 }
+//             }
+//         }
+//     }
+
+//     // Return the distances from each vertex from the source node
+//     distances
+// }
+
+
+
+
+
+//  DIJKSTRA ALGORITHM 
 // -------------------------------------------------------------------------
+// Define a function that performs the Dijkstra algorithm on a graph
+// Function to compute the shortest path from the starting vertex to all other vertices
+// in the graph using Dijkstra's algorithm
+// create the Dijkstra's algorithm
+// LEONIDAS CODE
+// fn dijkstra(src: usize, graph: &Vec<Vec<usize>>, V: usize) -> Vec<usize> {
+//     let mut dist = vec![std::usize::MAX; V];
+//     dist[src] = 0;
+//     let mut sptSet = vec![false; V];
+
+//     for cout in 0..V {
+//         // Pick the minimum distance vertex from
+//         // the set of vertices not yet processed.
+//         // x is always equal to src in first iteration
+//         let x = minDistance(dist.clone(), sptSet.clone());
+
+//         // Put the minimum distance vertex in the
+//         // shortest path tree
+//         sptSet[x] = true;
+
+//         // Update dist value of the adjacent vertices
+//         // of the picked vertex only if the current
+//         // distance is greater than new distance and
+//         // the vertex in not in the shortest path tree
+//         for y in 0..(graph[count].len()) {
+//             let (neighbor, cost) = graph[count][y];
+//             if !sptSet[neighbor] && dist[neighbor] > dist[x] + cost {
+//                 dist[neighbor] = dist[x] + cost;
+//             }
+//         }
+//     }
+
+//     dist
+// }
+
+// fn dijkstra(src: usize, graph: &Vec<Vec<usize>>, V: usize) -> Vec<usize> {
+//     let mut dist = vec![std::usize::MAX; V];
+//     dist[src] = 0;
+//     let mut sptSet = vec![false; V];
+
+//     for count in 0..V {
+//         // Pick the minimum distance vertex from
+//         // the set of vertices not yet processed.
+//         // x is always equal to src in first iteration
+//         let x = minDistance(dist.clone(), sptSet.clone());
+//         // initialize count
+
+//         // Put the minimum distance vertex in the
+//         // shortest path tree
+//         sptSet[x] = true;
+
+//         // Update dist value of the adjacent vertices
+//         // of the picked vertex only if the current
+//         // distance is greater than new distance and
+//         // the vertex in not in the shortest path tree
+//         for y in 0..(graph[count].len()) {
+//             let (neighbor, cost) = graph[count][y];
+//             if !sptSet[neighbor] && dist[neighbor] > dist[x] + cost {
+//                 dist[neighbor] = dist[x] + cost;
+//             }
+//         }
+//     }
+
+//     dist
+// }
+
+
+fn minDistance(dist: Vec<usize>, sptSet: Vec<bool>) -> usize {
+    let mut min = std::usize::MAX;
+    let mut minIndex = 0;
+
+    for v in 0..dist.len() {
+        if !sptSet[v] && dist[v] <= min {
+            min = dist[v];
+            minIndex = v;
+        }
+    }
+
+    minIndex
+}
 
 
 // // IMPLEMENTING BFS ALGORITHM 
@@ -155,14 +357,13 @@ fn bfs(g: &Graph,source_node:usize) -> Vec<Vertex> {
             }
         }
     }
-    println!("{:?}",visited.len());
+    println!("Number of Edges Visited in BFS: {:?}",visited.len());
     // Return the list of vertices in the order they were visited
     visited
 }
 
 
-// // -------------------------------------------------------------------------
-
+// LECTURE 28 FUNCTION FOR BFS
 // MARK COMPONENT BFS
 fn mark_component_bfs(vertex:Vertex, graph:&Graph, component:&mut Vec<Option<Component>>, component_no:Component) {
     // Check that the index of the vertex is within the bounds of the component vector
@@ -189,31 +390,47 @@ fn mark_component_bfs(vertex:Vertex, graph:&Graph, component:&mut Vec<Option<Com
 
 // FUNCTION DFS 
 // TO COMPUTE DISTANCE FROM A GIVEN VERTEX
-fn dfs(vertex:Vertex, graph: &Graph, d: usize, visited: &mut Vec<bool>, distance: &mut Vec<usize> ){
-    for w in graph.outedges[vertex].iter() {
-      if visited[*w] == false {
-        distance[*w] = d;
-        visited[*w] = true;
-        dfs(*w, graph, d+1, visited, distance);
-      }
+// Return the list of vertices visited by the DFS algorithm starting at the given vertex
+// Create a function that computes DFS algorithm when given a Graph and a starting node
+fn dfs(graph: &Graph, node: usize) -> Vec<Vertex> {
+    let mut q = VecDeque::new();
+    let mut visited = Vec::new();
+
+    q.push_back(node);
+    while !q.is_empty() {
+        let current_vertex = q.pop_back().unwrap();
+        if visited.contains(&current_vertex) {
+            continue; }
+        visited.push(current_vertex);
+        if current_vertex < graph.outedges.len() {
+            for &neighbor in &graph.outedges[current_vertex] {
+                if !visited.contains(&neighbor) {
+                    q.push_back(neighbor);
+                }
+            }
+        }
     }
+    println!("Number of Edges Visited in DFS: {:?}", visited.len());
+    visited
 }
+
 
 // FUNCTION TO CREATE AN ADJACENCY LIST GIVEN A LIST OF EDGES
 fn grouped_vertex_tuples(vertex_tuples: &[(Vertex, Vertex)]) -> AdjacencyLists {
-    let mut adjacency_lists: AdjacencyLists = Vec::new();
+    let mut adjacency_lists: AdjacencyLists = vec![Vec::new(); vertex_tuples.len()];
 
     for &(u, v) in vertex_tuples {
-        if adjacency_lists.len() <= u {
-            adjacency_lists.resize(u + 1, Vec::new());
-        }
         adjacency_lists[u].push(v);
     }
+
+    // Remove empty adjacency lists
+    adjacency_lists.retain(|l| !l.is_empty());
+
     adjacency_lists
 }
 
 
-// FUNCTION TO READ FILE AND RETURN A LIST OF EDGES
+// FUNCTION TO READ TEXT FILE AND RETURN A LIST OF EDGES
 fn read_file(_path: &str) -> Vec<(Vertex, Vertex)>{
     let mut list_edges: Vec<(Vertex, Vertex)> = Vec::new();
     let file = File::open("edges_huawei.txt").expect("Could not open file");
@@ -297,7 +514,6 @@ impl Graph {
                 edges.push((u, v));
             }
         }
-
         // Sort the edges in ascending order
         edges.sort();
 
@@ -321,9 +537,30 @@ impl Graph {
             outedges: sorted_outedges,
         }
     }
+
+    fn sort_descending_order(&self) -> Graph {
+        // Create a vector of tuples representing the edges in the graph
+        let mut edges: ListOfEdges = Vec::new();
+    
+        // Iterate over the vertices in the graph
+        for (u, neighbors) in self.outedges.iter().enumerate() {
+            // Iterate over the neighbors of the current vertex
+            for &v in neighbors {
+                // Add the edge (u, v) to the list of edges
+                edges.push((u, v));
+            }
+        }
+    
+        // Sort the edges in descending order
+        edges.sort_by(|a, b| b.cmp(a));
+    
+        // Create a new Graph struct with the sorted edges
+        Graph::create_directed(self.n, &edges)
+    }
 }
 
 
+// FUNCTION THAT COMPUTES THE PAGE RANK
 // COMPUTE THE PAGE RANK FOR TOP 50 VERTEXES
 fn page_rank(data: &mut Vec<(Vertex, Vertex)>, n_vertices:usize) -> Vec<(Vertex, f64)> { 
     // This function creates a page rank calculator for each node
