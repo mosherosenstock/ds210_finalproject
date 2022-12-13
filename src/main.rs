@@ -46,19 +46,16 @@ fn main() {
         println!("Node: {} - Edges: {:?}", page_rank[i].0, edges);
     }
 
-    // IMPLEMENTING BFS ALGORITHM - AI BASED CODE
-    // -------------------------------------------------------------------------
-    // I AM HAVING THE PROBLEM THAT THE RETURN STATEMENT 
-    // IS NOT RETURNING A 50 LEN VECTOR AS EXPECTED
+    // IMPLEMENTING BFS ALGORITHM 
     // -------------------------------------------------------------------------  
     let visited = bfs(&graph, list_edges[0].0);
     println!("Visited vertices BFS: {:?}", visited);  
     println!("");
 
-    // IMPLEMENTING DIJKSTRA ALGORITHM - AI BASED CODE
-    // -------------------------------------------------------------------------
-    let distances = dijkstra(&graph, 0);
-    println!("Distances from initial vertex: {:?}", distances);
+    // // IMPLEMENTING DIJKSTRA ALGORITHM 
+    // // -------------------------------------------------------------------------
+    // let distances = dijkstra(&graph, 0);
+    // println!("Distances from initial vertex: {:?}", distances);
 
 
 
