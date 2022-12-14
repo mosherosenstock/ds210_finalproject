@@ -15,10 +15,13 @@ use std::iter::successors;
 
 
 fn main() {
+    // Read our text file containing the Data
+    // -------------------------------------------------------------------------
     let mut n=1000;
     let mut list_edges = read_file("edges_huawei.txt");
     list_edges.sort();
 
+    // Calculate the Page Rank of our list_edges
     let mut page_rank = page_rank(&mut list_edges, n);
 
     // With this code we are filtering our list_edges to only contain the connections between the top 50 edges
@@ -60,7 +63,8 @@ fn main() {
         graph_hashmap.insert(*num, &adj_list[i]);
     }
 
-    // Preview our graph
+    // PREVIEW OUR GRAPH
+    // -------------------------------------------------------------------------
     println!("These are the top 50 nodes and their connections between them: ");
     for (i, edges) in graph.outedges.iter().enumerate() {
         // Skip vertices that don't have any outgoing edges
@@ -71,7 +75,6 @@ fn main() {
         println!("({}) Node: {} - Edges: {:?}",i, page_rank[i].0, edges); //list_edges[i].0,edges);//
     }
 
-
     // IMPLEMENTING BFS ALGORITHM 
     // -------------------------------------------------------------------------
     let source_node = page_rank[0].0;
@@ -81,31 +84,33 @@ fn main() {
 
     // CALCULATE THE DISTANCE BETWEEN EACH NODE INSIDE THE TOP 50 NODES
     // -------------------------------------------------------------------------
-    println!("I dont want to print the distance between each of the top 50 nodes between them because it will print a huge string of numbers. So I will just print the distance between the first node and the rest of the nodes inside the top 50 nodes.");
-    println!("\nThe distance between the first node = ({}) and the rest of nodes inside the top 50 nodes is: \n", top50[0]);
+    println!(" - I dont want to print the distance between each of the top 50 nodes between them because it will print a huge string of numbers. So I will just print the distance between the first node and the rest of the nodes inside the top 50 nodes.");
+    println!("\nThe distance between the first node = ({}) and the rest of nodes inside the top 50 nodes is: ", top50[0]);
+    // let mut distance_nodes= 0; //bfs_distance_nodes(&graph_hashmap, top50[0], top50[0]);
     for i in 0..top50.len() {
         let mut distance_nodes= bfs_distance_nodes(&graph_hashmap, top50[0], top50[i]);
-        print!("->The distance between node {} and node {} is {}.   ", top50[0], top50[i],distance_nodes);
+        println!("->The distance between node {} and node {} is {}.   ", top50[0], top50[i],distance_nodes);
     }
+    // println!("\nThe average distance between the node {} and the rest of the nodes inside the Top 50 nodes is: {}", top50[0], distance_nodes );
+
 
 
 // // -------------------------------------------------------------------------
 // THIS TWO ALGORITHMS I CREATED THE CODE FOR THEM BUT I DID NOT IMPLEMENT THEM
-// AS I DECIDED TO ANALYZE BFS ALGORITHM AND THE DISTANCE BETWEEN NODES INSTEAD
-// THEY ARE COMMENTED OUT BUT YOU CAN UNCOMMENT THEM TO SEE THE CODE
-
+// AS I DECIDED TO ANALYZE BFS ALGORITHM AND THE DISTANCE BETWEEN NODES INSTEAD. 
+// LEAVING DFS AND DIJKSTRA ALGORITHM WITHOUT USE
+// THEY ARE COMMENTED OUT BUT YOU CAN UNCOMMENT THEM TO SEE THE CODE 
+// (WHICH IS NOT RELEVANT FOR THE PROJECT REPORT)
 
     // // -------------------------------------------------------------------------
     // // IMPLEMENTING DFS ALGORITHM
     // let visi = dfs(&graph, page_rank[0].0);
     // println!("Visited vertices DFS:\n {:?}", visi);
 
-
     // // -------------------------------------------------------------------------   
     // // IMPLEMENTING DIJKSTRA ALGORITHM
-    // let mut distances = dijkstra(page_rank[0].0, &adj_list, page_rank[49].0);
+    // let mut distances = dijkstra(page_rank[0].0, &graph, page_rank[49].0);
     // println!("Distances from initial vertex (computed with Dijkstra): {:?}", distances);
-
 
 }
 
@@ -114,7 +119,6 @@ fn main() {
 // CALCULATE THE DISTANCES BETWEEN VECTORS
 // The distance between two nodes can be obtained in terms of lowest common ancestor 
 // -------------------------------------------------------------------------
-
 fn bfs_distance_nodes(graph: &HashMap<usize, &Vec<usize>>, source: usize, target: usize) -> usize {
     let mut queue = VecDeque::new();
     let mut distances = HashMap::new();
@@ -134,7 +138,6 @@ fn bfs_distance_nodes(graph: &HashMap<usize, &Vec<usize>>, source: usize, target
             if !visited.contains_key(&neighbor) {
                 queue.push_back(neighbor);
                 visited.insert(neighbor, true);
-// continue the function here
 
                 let distance = distances[&current] + 1;
                 distances.insert(neighbor, distance);
@@ -143,11 +146,6 @@ fn bfs_distance_nodes(graph: &HashMap<usize, &Vec<usize>>, source: usize, target
     }
     std::usize::MAX
 }
-
-
-
-
-
 
 
 //  DIJKSTRA ALGORITHM 
@@ -241,7 +239,6 @@ fn mark_component_bfs(vertex:Vertex, graph:&Graph, component:&mut Vec<Option<Com
     if vertex < component.len() {
         component[vertex] = Some(component_no);
     }
-
     let mut queue = std::collections::VecDeque::new();
     queue.push_back(vertex);
 
@@ -293,13 +290,10 @@ fn grouped_vertex_tuples(vertex_tuples: &[(Vertex, Vertex)]) -> AdjacencyLists {
     for &(u, v) in vertex_tuples {
         adjacency_lists[u].push(v);
     }
-
     // Remove empty adjacency lists
     adjacency_lists.retain(|l| !l.is_empty());
-
     adjacency_lists
 }
-
 
 // FUNCTION TO READ TEXT FILE AND RETURN A LIST OF EDGES
 fn read_file(_path: &str) -> Vec<(Vertex, Vertex)>{
